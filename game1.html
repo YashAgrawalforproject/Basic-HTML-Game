@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<style>
+canvas {
+    border:3px solid #ffffff;
+    background-color: aliceblue; 
+  background-image: repeating-radial-gradient(red, yellow 10%, green 15%, blue 20%, orange 25%, pink 30%);
+	  box-shadow: 10px 10px 5px grey;
+}
+myGamePiece{
+color:black;
+}
+</style>
+</head>
+<body onload="startGame()">
+<script>
+
+var myGamePiece;
+var myObstacles = [];
+var myScore;
+var mySound;
+var myMusic;
+
+function startGame() {
+    myGamePiece = new component(55, 55, "rgb(50,150,250)", 10, 310);
+    mySound = new sound("E:\phone\photos\KOTA\MOBILE\Download\02 Ziddi Dil - Mary Kom (PagalWorld.com) 320Kbps.mp3");
+    myMusic = new sound("E:\phone\photos\KOTA\MOBILE\Download\02 Ziddi Dil - Mary Kom (PagalWorld.com) 320Kbps.mp3");
+    myMusic.play();
+    myScore = new component("30px", "Consolas", "black", 280, 40, "text");
+    myGameArea.start();
+}
+
+var myGameArea = {
+    canvas : document.createElement("canvas"),
+    start : function() {
+        this.canvas.width = 1050;
+        this.canvas.height = 450;
+        this.context = this.canvas.getContext("2d");
+        document.body.insertBefore(this.canvas, document.body.childNodes[0]);
+        this.frameNo = 0;
+        this.interval = setInterval(updateGameArea, 20);
+        window.addEventListener('keydown', function (e) {
+		myGameArea.keys = (myGameArea.keys || []);
+		myGameArea.keys[e.keyCode] = (e.type == "keydown");
+		})
+		window.addEventListener('keyup', function (e) {
+		myGameArea.keys[e.keyCode] = (e.type == "keydown");
+		})
+
+		},
+    clear : function() {
+        this.context.clearRect(0, 0, this.canvas.width, this.canvas.height);
+    },
+    stop : function() {
+        clearInterval(this.interval);
+    }
+}
+
+function component(width, height, color, x, y, type) {
+    myObstacles : document.createElement("myObstacles"),
+	this.type = type;
+    this.width = width;
+    this.height = height;
+    this.speedX = 0;
+    this.speedY = 0;    
+    this.x = x;
+    this.y = y;    
+    this.update = function() {
+        ctx = myGameArea.context;
+        if (this.type == "text") {
+            ctx.font = this.width + " " + this.height;
+            ctx.fillStyle = color;
+            ctx.fillText(this.text, this.x, this.y);
+        } else {
+            ctx.fillStyle = color;
+			ctx.fillRect(this.x, this.y, this.width, this.height);
+        }
+    }
+    this.newPos = function() {
+        this.x += this.speedX;
+        this.y += this.speedY;        
+    }
+    this.crashWith = function(otherobj) {
+        var myleft = this.x;
+        var myright = this.x + (this.width);
+        var mytop = this.y;
+        var mybottom = this.y + (this.height);
+        var otherleft = otherobj.x;
+        var otherright = otherobj.x + (otherobj.width);
+        var othertop = otherobj.y;
+        var otherbottom = otherobj.y + (otherobj.height);
+        var crash = true;
+        if ((mybottom < othertop) || (mytop > otherbottom) || (myright < otherleft) || (myleft > otherright)) {
+            crash = false;
+        }
+        return crash;
+		
+	}
+}
+
+function updateGameArea() {
+    var x, height, gap, minHeight, maxHeight, minGap, maxGap;
+    for (i = 0; i < myObstacles.length; i += 1) {
+        if (myGamePiece.crashWith(myObstacles[i])) {
+            mySound.play();
+            myMusic.stop();
+            myGameArea.stop();
+            return;
+        } 
+    }
+    myGameArea.clear();
+	if(myGameArea.keys && myGameArea.keys[37]) {myGamePiece.speedX = -1;}
+	if(myGameArea.keys && myGameArea.keys[39]) {myGamePiece.speedX = 1;}
+	if(myGameArea.keys && myGameArea.keys[38]) {myGamePiece.speedY = -1;}
+	if(myGameArea.keys && myGameArea.keys[40]) {myGamePiece.speedY = 1;}
+	
+    myGameArea.frameNo += 2;
+    if (myGameArea.frameNo == 1 || everyinterval(150)) {
+        x = myGameArea.canvas.width;
+        minHeight = 100;
+        maxHeight = 200;
+        height = Math.floor(Math.random()*(maxHeight-minHeight+1)+minHeight);
+        minGap = 200;
+        maxGap = 300;
+        gap = Math.floor(Math.random()*(maxGap-minGap+1)*0.5+minGap-35);
+        myObstacles.push(new component(35, height + 20, "green", x+10, 50));
+        myObstacles.push(new component(30, x - height - gap, "yellow", x, height + gap + 40));
+    }
+    for (i = 0; i < myObstacles.length; i += 1) {
+        myObstacles[i].speedX = -1;
+        myObstacles[i].newPos();
+        myObstacles[i].update();
+    }
+    myScore.text="SCORE: " + myGameArea.frameNo;
+    myScore.update();
+    myGamePiece.newPos();    
+    myGamePiece.update();
+	myGameArea.update();
+}
+function sound(src) {
+    this.sound = document.createElement("audio");
+    this.sound.src = src;
+    this.sound.setAttribute("preload", "auto");
+    this.sound.setAttribute("controls", "none");
+    this.sound.style.display = "none";
+    document.body.appendChild(this.sound);
+    this.play = function(){
+        this.sound.play();
+    }
+    this.stop = function(){
+        this.sound.pause();
+    }    
+}
+
+
+function everyinterval(n) {
+    if ((myGameArea.frameNo / n) % 1 == 0) {return true;}
+    return false;
+}
+
+function clearmove() {
+    myGamePiece.speedX = 2; 
+    myGamePiece.speedY = 2; 
+}
+</script>
+<p>The score will count one point for each frame you manage to "stay alive".</p>
+</body>
+</html>
